@@ -99,16 +99,17 @@ def normalize_bib(
             [line for line in bib_entry if not is_contain_var(line)]
         )
         bib_entry_parsed = bibtexparser.loads(bib_entry_str, bibparser)
-        if (
-            len(bib_entry_parsed.entries) == 0
-            or "title" not in bib_entry_parsed.entries[0]
-        ):
+        if len(bib_entry_parsed.entries) == 0:
+            output_bib_entries.append(bib_entry)
             continue
-        original_title = bib_entry_parsed.entries[0]["title"]
         original_bibkey = bib_entry_parsed.entries[0]["ID"]
         if deduplicate and original_bibkey in bib_keys:
             continue
         bib_keys.add(original_bibkey)
+        if "title" not in bib_entry_parsed.entries[0]:
+            output_bib_entries.append(bib_entry)
+            continue
+        original_title = bib_entry_parsed.entries[0]["title"]
         title = normalize_title(original_title)
         # try to map the bib_entry to the keys in all_bib_entries
         found_bibitem = None

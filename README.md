@@ -74,6 +74,7 @@ Normalize your bibtex file with the official conference information:
 ```bash 
 rebiber -i /path/to/input.bib -o /path/to/output.bib
 ```
+Entries that cannot be normalized (for example, entries without a `title`) are preserved as-is in the output.
 You can find a pair of example input and output files in `rebiber/example_input.bib` and `rebiber/example_output.bib`.
 
 | argument | usage|
