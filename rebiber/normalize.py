@@ -24,8 +24,6 @@ def has_integer(line):
 
 
 def is_contain_var(line):
-    if "month=" in line.lower().replace(" ", ""):
-        return True  # special case
     line_clean = line.lower().replace(" ", "")
     if "=" in line_clean:
         # We ask if there is {, ', ", or if there is an integer in the line (since integer input is allowed)
@@ -38,14 +36,32 @@ def is_contain_var(line):
     return False
 
 
+def strip_month_field(line):
+    line_clean = line.lower().replace(" ", "")
+    if "month=" not in line_clean:
+        return line
+    stripped = re.sub(r"(?i)\bmonth\s*=\s*[^,}]+,?\s*", "", line)
+    return stripped
+
+
+def sanitize_bib_line(line):
+    line = strip_month_field(line)
+    if not line.strip():
+        return ""
+    if is_contain_var(line):
+        return ""
+    return line
+
+
 def post_processing(output_bib_entries, removed_value_names, abbr_dict, sort):
     bibparser = bibtexparser.bparser.BibTexParser(ignore_nonstandard_types=False)
     bib_entry_str = ""
     for entry in output_bib_entries:
         for line in entry:
-            if is_contain_var(line):
+            clean_line = sanitize_bib_line(line)
+            if not clean_line:
                 continue
-            bib_entry_str += line
+            bib_entry_str += clean_line
         bib_entry_str += "\n"
     parsed_entries = bibtexparser.loads(bib_entry_str, bibparser)
     if len(parsed_entries.entries) < len(output_bib_entries) - 5:
@@ -95,9 +111,12 @@ def normalize_bib(
         bibparser = bibtexparser.bparser.BibTexParser(ignore_nonstandard_types=False)
         original_title = ""
         original_bibkey = ""
-        bib_entry_str = " ".join(
-            [line for line in bib_entry if not is_contain_var(line)]
-        )
+        bib_entry_parts = []
+        for line in bib_entry:
+            clean_line = sanitize_bib_line(line)
+            if clean_line:
+                bib_entry_parts.append(clean_line)
+        bib_entry_str = " ".join(bib_entry_parts)
         bib_entry_parsed = bibtexparser.loads(bib_entry_str, bibparser)
         if len(bib_entry_parsed.entries) == 0:
             output_bib_entries.append(bib_entry)
